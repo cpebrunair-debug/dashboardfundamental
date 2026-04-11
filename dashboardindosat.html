@@ -965,9 +965,9 @@ body.method-view .app { display:none; }
     <div class="stat-block stat-red">
       <div class="stat-ico">💸</div>
       <div class="stat-body">
-        <div class="stat-label">Total Est. Kerugian</div>
+        <div class="stat-label" id="kpiLossLabel">Total Revenue at Risk</div>
         <div class="stat-val" id="kpiLoss">—</div>
-        <div class="stat-foot">Model 1: Rev × Hazard Index</div>
+        <div class="stat-foot" id="kpiLossFoot">Model 1: Revenue at Risk = Rev × Hazard Index</div>
       </div>
     </div>
     <div class="stat-block stat-magenta">
@@ -997,9 +997,9 @@ body.method-view .app { display:none; }
     <div class="stat-block stat-purple">
       <div class="stat-ico">📈</div>
       <div class="stat-body">
-        <div class="stat-label">Kerugian Maks / BTS</div>
+        <div class="stat-label" id="kpiMaxLossLabel">Revenue at Risk Maks / BTS</div>
         <div class="stat-val" id="kpiMaxLoss">—</div>
-        <div class="stat-foot">IDR tertinggi per site</div>
+        <div class="stat-foot" id="kpiMaxLossFoot">IDR tertinggi per site</div>
       </div>
     </div>
     <div class="stat-block stat-teal">
@@ -1030,12 +1030,12 @@ body.method-view .app { display:none; }
     </div>
 
     <div class="rp-section">
-      <div class="rp-label">Top 10 Provinsi — Kerugian</div>
+      <div class="rp-label" id="topProvLabel">Top 10 Provinsi — Revenue at Risk</div>
       <div class="prov-bars" id="provBars"></div>
     </div>
 
     <div class="rp-section">
-      <div class="rp-label">Kerugian per Jenis Bencana</div>
+      <div class="rp-label" id="disasterBarLabel">Revenue at Risk per Jenis Bencana</div>
       <div style="height:140px; position:relative;">
         <canvas id="barChart"></canvas>
       </div>
@@ -1462,17 +1462,32 @@ function updateUIContext() {
   const scenario = getActiveScenario();
   const mapLabel = document.querySelector('.map-pill-text');
   const legendTitle = document.querySelector('.legend-title');
-  const lossFoot = document.querySelector('#kpiLoss').closest('.stat-body').querySelector('.stat-foot');
+  const lossLabel = document.getElementById('kpiLossLabel');
+  const lossFoot = document.getElementById('kpiLossFoot');
+  const maxLossLabel = document.getElementById('kpiMaxLossLabel');
+  const maxLossFoot = document.getElementById('kpiMaxLossFoot');
+  const topProvLabel = document.getElementById('topProvLabel');
+  const disasterBarLabel = document.getElementById('disasterBarLabel');
   const affectedFoot = document.querySelector('#kpiAffected').closest('.stat-body').querySelector('.stat-foot');
   if (currentModel === 2) {
     mapLabel.textContent = 'BTS ditampilkan · Model 2 · ' + getScenarioIcon(scenario) + ' ' + scenario + ':';
     legendTitle.textContent = 'Hazard Level · ' + scenario;
+    lossLabel.textContent = 'Total Est. Kerugian';
     lossFoot.textContent = 'Model 2: ' + scenario + ' | Revenue × HI × DI';
+    maxLossLabel.textContent = 'Kerugian Maks / BTS';
+    maxLossFoot.textContent = 'IDR tertinggi per site';
+    topProvLabel.textContent = 'Top 10 Provinsi — Kerugian';
+    disasterBarLabel.textContent = 'Kerugian per Jenis Bencana';
     affectedFoot.textContent = 'Terikat skenario aktif pada Model 2';
   } else {
     mapLabel.textContent = 'BTS ditampilkan:';
     legendTitle.textContent = 'Hazard Level';
-    lossFoot.textContent = 'Model 1: Rev × Hazard Index';
+    lossLabel.textContent = 'Total Revenue at Risk';
+    lossFoot.textContent = 'Model 1: Revenue at Risk = Rev × Hazard Index';
+    maxLossLabel.textContent = 'Revenue at Risk Maks / BTS';
+    maxLossFoot.textContent = 'IDR tertinggi per site';
+    topProvLabel.textContent = 'Top 10 Provinsi — Revenue at Risk';
+    disasterBarLabel.textContent = 'Revenue at Risk per Jenis Bencana';
     affectedFoot.textContent = 'Hazard level ≠ No Hazard';
   }
 }
@@ -1686,7 +1701,7 @@ function renderMap() {
             <div><div class="mp-key">Downtime</div><div class="mp-val">${d.combo.dt} hari</div></div>
           </div>
           <div class="mp-loss">
-            <div class="mp-loss-label">Estimasi Kerugian</div>
+            <div class="mp-loss-label">${currentModel === 1 ? 'Revenue at Risk' : 'Estimasi Kerugian'}</div>
             <div class="mp-loss-val">IDR ${fmt(d.loss)}</div>
           </div>
         </div>`).openOn(map);
@@ -1841,7 +1856,7 @@ function renderGroupCards() {
       ${hazBars ? `<div class="gcard-hazard-bars">${hazBars}</div>` : ''}
       <div class="gcard-loss-share">
         <div class="gls-label">
-          <span>Porsi Kerugian</span>
+          <span>${currentModel===1 ? 'Porsi Revenue at Risk' : 'Porsi Kerugian'}</span>
           <span style="font-family:'JetBrains Mono',monospace;font-weight:700;color:var(--text2)">${pct}%</span>
         </div>
         <div class="gls-track"><div class="gls-fill" style="width:${pct}%"></div></div>
@@ -1901,7 +1916,7 @@ function showDetail(d, preserveSelection = false) {
       <div class="dcell"><div class="dcell-label">Downtime</div><div class="dcell-val">${d.combo.dt} hari</div></div>
       <div class="dcell"><div class="dcell-label">Revenue/Bln</div><div class="dcell-val" style="font-size:11px">IDR ${fmt(d.rev||0)}</div></div>
       <div class="dcell"><div class="dcell-label">% ke Rev Tahunan</div><div class="dcell-val">${lossAnnualPct.toFixed(3)}%</div></div>
-      <div class="dcell hl" style="grid-column:1 / -1;"><div class="dcell-label">Est. Kerugian</div><div class="dcell-val">IDR ${fmt(d.loss)}</div></div>
+      <div class="dcell hl" style="grid-column:1 / -1;"><div class="dcell-label">${currentModel===1 ? 'Revenue at Risk' : 'Est. Kerugian'}</div><div class="dcell-val">IDR ${fmt(d.loss)}</div></div>
     </div>`;
 }
 
